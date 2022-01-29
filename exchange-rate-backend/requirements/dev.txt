@@ -1,0 +1,6 @@
+-r requirements.txt
+
+black==21.5b1
+flake8==3.9.2
+mypy==0.812
+mypy-extensions==0.4.3

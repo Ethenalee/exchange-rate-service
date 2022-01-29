@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+
+echo "Begin database migrate..."
+
+RDB_NAME=$DB_NAME
+
+MIGRATIONS_PATH=/srv/root/database/migrations
+MIGRATIONS_SOURCE=file://$MIGRATIONS_PATH
+
+if [[ -v UNIT_TEST ]]; then
+    RDB_NAME="${DB_NAME}_test"
+fi
+
+DB_URI="postgres://${WRITE_DB_USER}:${WRITE_DB_PASS}@${WRITE_DB_HOST}:${WRITE_DB_PORT}/${RDB_NAME}?sslmode=require"
+
+
+if [[ $# -gt 0 ]]; then
+    case "$1" in
+        up)
+            echo "Running DB Migrations $1..."
+            go-migrate -source $MIGRATIONS_SOURCE -database $DB_URI $@
+            echo "Migrations $1 complete"
+        ;;
+
+        down)
+            # Passing in yes, because down prompts for confirm.
+            echo "Running DB Migrations $1..."
+            yes | go-migrate -source $MIGRATIONS_SOURCE -database $DB_URI $@
+            echo "Migrations $1 complete"
+        ;;
+
+        create)
+            # cclean the input a little bit
+            raw=$2
+            lower=${raw,,}
+            cleaned=${lower// /_}
+            echo "Running create DB Migration..."
+            go-migrate create -ext sql -dir $MIGRATIONS_PATH -seq $cleaned
+            echo "Create migration complete"
+        ;;
+
+        *)
+            echo "Help for running migrations:"
+        ;;
+
+    esac
+fi
