@@ -38,6 +38,56 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "/v1/currencies",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{API_URL}}/v1/currencies",
+					"host": [
+						"{{API_URL}}"
+					],
+					"path": [
+						"v1",
+						"currencies"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/v1/rates",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "{{API_URL}}/v1/rates",
+					"host": [
+						"{{API_URL}}"
+					],
+					"path": [
+						"v1",
+						"rates"
+					],
+					"query": [
+						{
+							"key": "base_currency",
+							"value": "{{base_currency}}"
+						},
+						{
+							"key": "quote_currency",
+							"value": "{{quote_currency}}"
+						},
+						{
+							"key": "amount",
+							"value": "{{amount}}"
+						}
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"event": [
