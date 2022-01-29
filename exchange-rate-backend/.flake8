@@ -1,0 +1,4 @@
+[flake8]
+ignore = E501, W503
+
+# For reference: https://github.com/grantmcconnaughey/Flake8Rules/tree/master/_rules
