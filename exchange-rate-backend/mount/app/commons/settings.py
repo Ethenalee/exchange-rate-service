@@ -24,10 +24,8 @@ class Settings(BaseSettings):
 
     EXCHANGERATE_API_URL: str = "https://open.exchangerate-api.com"
     EXCHANGE_POLLING_TIME_IN_SECONDS: int = 86400
-    EXCHANGE_RATES_TOPIC: str = f"exchange_rate_service_ex \
-        change_rates_{APP_ENV}"
-    EXCHANGE_RATES_CONSUMER_GROUP_ID: str = f"exchange_rate_service \
-        _exchange_rates_processor_{APP_ENV}"
+    EXCHANGE_RATES_TOPIC: str = f"exchange_rate_service_exchange_rates_{APP_ENV}"
+    EXCHANGE_RATES_CONSUMER_GROUP_ID: str = f"exchange_rate_service_exchange_rates_processor_{APP_ENV}"
     EXCHANGE_RATES_CACHE_KEY: str = "exchangerate_api_timestamp"
 
 
