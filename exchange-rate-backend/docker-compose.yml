@@ -70,12 +70,10 @@ services:
     ports:
       - 5001:5001
     links:
-      - postgres
       - kafka
       - redis
 
     depends_on:
-      - postgres
       - kafka
       - redis
 
