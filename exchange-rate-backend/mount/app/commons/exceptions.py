@@ -4,6 +4,7 @@ from enum import Enum
 class AppErrorCode(str, Enum):
     INVALID_PARAMS = "INVALID_PARAMS"
     RATES_NOT_AVAILABLE = "RATES_NOT_AVAILABLE"
+    PROVIDER_NOT_AVAILALBE = "PROVIDER_NOT_AVAILALBE"
 
     # Health Checkxx
     DATABASE_UNAVAILABLE = "DATABASE_UNAVAILABLE"
@@ -15,6 +16,7 @@ class AppErrorCode(str, Enum):
 class AppErrorMessage(str, Enum):
     INVALID_PARAMS = "invalid params"
     RATES_NOT_AVAILABLE = "rates not available"
+    PROVIDER_NOT_AVAILALBE = "provider not available"
 
     # Health Checkxx
     DATABASE_UNAVAILABLE = "database_unavailable"

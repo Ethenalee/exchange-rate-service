@@ -17,6 +17,10 @@ class LogWriter(WriterOutput):
     def log_poller_end(self, timestamp: str):
         logger.info(f"EXCHANGE RATES POLLER: {timestamp} END")
 
+    @handler("exchange_rates_poll", "poller", "pass")
+    def log_poller_pass(self):
+        logger.info("EXCHANGE RATES POLLER: ALREADY POLLED")
+
 
 class MetricsWriter(WriterOutput):
     NAMESPACE = "exchange_rates_poller"
