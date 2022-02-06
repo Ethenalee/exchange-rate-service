@@ -30,10 +30,10 @@ case $APP_COMPONENT in
     /scripts/run-tests.sh
     ;;
   "exchangerate-poller")
-    python -m app.workers.exchangerate_poller
+    python -m app.workers.poller
     ;;
   "exchangerate-processor")
-    python -m app.workers.exchangerate_processor
+    python -m app.workers.processor
     ;;
   "server" | *)
      $EXTRA_PARAMS python $SECOMND_PARAM -m app.boot \
