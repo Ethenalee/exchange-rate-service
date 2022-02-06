@@ -14,8 +14,6 @@ if __name__ == "__main__":
     Writer.register_output(MetricsWriter())
 
     def _get_client():
-        from app.commons import logger
-        logger.warning(settings.EXCHANGE_WORKER_PROVIDER)
         if settings.EXCHANGE_WORKER_PROVIDER == "exchangerate_api":
             return ExchangerateClient()
 
