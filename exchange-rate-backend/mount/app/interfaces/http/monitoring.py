@@ -7,6 +7,7 @@ from starlette.responses import Response
 from app.commons import logger
 from app.commons.settings import settings
 from app.commons.metrics import Metrics
+from app.commons.database import do_db_health_check
 from app.interfaces.http.lib.auth import no_auth
 from app.interfaces.http.lib.context import RequestContext
 from app.interfaces.http.lib.responses import failure, success
@@ -20,25 +21,16 @@ class HealthCheckStatus:
     SUB_DEPENDENCY_ERROR = 2
 
 
-async def _do_db_health_check(db_operation, conn_name: str) -> bool:
-    try:
-        if await db_operation:
-            return True
-    except Exception as err:  # pragma: no cover
-        logger.error(f"Unable to connect to {conn_name} database: {err}")
-    return False
-
-
 @router.get("/health", tags=["Monitoring"])
 async def health_check(ctx: RequestContext = Security(no_auth)):
     logger.info("health status")
 
     db_conncs_statuses = [
-            await _do_db_health_check(
+            await do_db_health_check(
                 ctx.db.exec_read_one("SELECT version()"),
                 "read",
             ),
-            await _do_db_health_check(
+            await do_db_health_check(
                 ctx.db.exec_write("SELECT version()"),
                 "write",
             ),

@@ -5,10 +5,22 @@ class AppErrorCode(str, Enum):
     INVALID_PARAMS = "INVALID_PARAMS"
     RATES_NOT_AVAILABLE = "RATES_NOT_AVAILABLE"
 
+    # Health Checkxx
+    DATABASE_UNAVAILABLE = "DATABASE_UNAVAILABLE"
+    KAFKA_CONSUMER_DISCONNECTED = "KAFKA_CONSUMER_DISCONNECTED"
+    KAFKA_PRODUCER_DISCONNECTED = "KAFKA_PRODUCER_DISCONNECTED"
+    CACHE_DISCONNECTED = "CACHE_DISCONNECTED"
+
 
 class AppErrorMessage(str, Enum):
     INVALID_PARAMS = "invalid params"
     RATES_NOT_AVAILABLE = "rates not available"
+
+    # Health Checkxx
+    DATABASE_UNAVAILABLE = "database_unavailable"
+    KAFKA_CONSUMER_DISCONNECTED = "kafka_consumer_disconnected"
+    KAFKA_PRODUCER_DISCONNECTED = "kafka_producer_disconnected"
+    CACHE_DISCONNECTED = "cache_disconnected"
 
 
 class AppError(Exception):

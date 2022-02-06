@@ -154,3 +154,12 @@ def new_connection_pool() -> DBConnector:
         max_pool_size=settings.DB_MAX_POOL_SIZE,
         ssl=settings.DB_SSL,
     )
+
+
+async def do_db_health_check(db_operation, conn_name: str) -> bool:
+    try:
+        if await db_operation:
+            return True
+    except Exception as err:  # pragma: no cover
+        logger.error(f"Unable to connect to {conn_name} database: {err}")
+    return False
