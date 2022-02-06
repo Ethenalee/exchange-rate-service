@@ -3,17 +3,16 @@ import asyncio
 from dataclasses import dataclass
 from datetime import datetime
 from dataclasses_json import dataclass_json
-from decimal import Decimal
 from json import dumps
 
 from app.adapters.kafka.consumer import get_consumer, KafkaConsumerConfig,\
     check_consumer_health
-from app.commons import logger, cache, datetime_util, json
+from app.commons import logger, cache, json
 from app.commons.database import new_connection_pool, DBSession, \
     do_db_health_check
-from app.commons.exceptions import AppErrorCode
+from app.commons.exceptions import AppErrorCode, AppError, AppErrorMessage
 from app.commons.settings import settings
-from app.repositories.exchangerate_api_rates import ExchangerateApiRateRepo
+from app.usecases.processor import ProcessorUsecases
 from ..worker_server import WorkerInterface
 from ..writer import Writer
 
@@ -70,11 +69,17 @@ class Worker(WorkerInterface):
                         kafka_payload=dumps(message.value),
                     )
                     if settings.EXCHANGE_WORKER_PROVIDER == "exchangerate_api":
-                        await self._process_exchangerate_api_rate(message)
+                        await ProcessorUsecases(self.cache_session,
+                                                self.db_session) \
+                            ._process_exchangerate_api_rate(message)
                         Writer \
                             .write(("exchange_rates_processor",
                                     "processor", "end"),
                                    json.loads(message.key)["time"])
+                    else:
+                        logger.warning(AppErrorCode.PROVIDER_NOT_AVAILALBE)
+                        raise AppError(AppErrorCode.PROVIDER_NOT_AVAILALBE,
+                                       AppErrorMessage.PROVIDER_NOT_AVAILALBE)
 
                 else:
                     logger.error(
@@ -86,33 +91,6 @@ class Worker(WorkerInterface):
                     )
         except Exception as error:
             logger.warning(error)
-
-    async def _process_exchangerate_api_rate(self, message):
-        exchangerate_api_res = json.loads(message.value)
-        time_last_update_unix = \
-            datetime_util.timestamp_to_datetime(
-                exchangerate_api_res["time_last_update_unix"]
-            )
-        await self.cache_session.set(
-            key=settings.EXCHANGE_RATES_CACHE_KEY,
-            value=time_last_update_unix.isoformat(),
-        )
-
-        rates = exchangerate_api_res["rates"]
-        await self.cache_session.set(key="rates",
-                                     value=json.dumps(rates))
-
-        async with self.db_session.transaction():
-            for currency_code, rate in rates.items():
-                await ExchangerateApiRateRepo(self.db_session) \
-                    .create(
-                    currrency_code=currency_code,
-                    base_currency_code=exchangerate_api_res
-                        ["base_code"],
-                    rate=Decimal(rate),
-                    time_last_update_unix=time_last_update_unix,
-                    response=json.dumps(exchangerate_api_res),
-                    )
 
     async def health_check(self) -> Tuple[bool, List[AppErrorCode]]:
         db_conncs_statuses = [

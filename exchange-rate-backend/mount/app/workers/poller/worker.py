@@ -1,29 +1,19 @@
 import asyncio
-from dataclasses import dataclass
-from datetime import datetime
 from typing import List, Tuple
-from dataclasses_json import dataclass_json
 
 from app.adapters.kafka.producer import get_producer, KafkaProducerConfig, \
-                                        send, check_producer_health
-from app.commons import logger, cache, datetime_util
+                                        check_producer_health
+from app.commons import logger, cache
 from app.commons.settings import settings
-from app.commons.exceptions import AppErrorCode
+from app.commons.exceptions import AppErrorCode, AppError, AppErrorMessage
+from app.usecases.poller import PollUsecases
 from ..worker_server import WorkerInterface
 from ..writer import Writer
 
 
-@dataclass_json
-@dataclass
-class ExchangerateKey:
-    provider: str
-    time: datetime
-
-
 class Worker(WorkerInterface):
-    def __init__(self, client=None):
+    def __init__(self):
         self.cache_connector = cache.CacheConnector(settings.REDIS_DSN)
-        self.client = client
         self.poll_interval = settings.EXCHANGE_POLLING_TIME_IN_SECONDS
 
     async def connect(self) -> None:
@@ -47,39 +37,30 @@ class Worker(WorkerInterface):
 
     async def work(self) -> None:
         try:
-            interval = self.poll_interval
-
-            last_poll_timestamp_str = \
-                await self.cache_session.get(settings.EXCHANGE_RATES_CACHE_KEY)
-            last_exchangerate_api_timestamp = \
-                datetime_util.fromisoformat(last_poll_timestamp_str) \
-                if last_poll_timestamp_str is not None else None
-
-            if (last_exchangerate_api_timestamp is None or
-                    last_exchangerate_api_timestamp.day !=
-                    datetime_util.current_date().day):
+            if settings.EXCHANGE_WORKER_PROVIDER == "exchangerate_api":
                 Writer.write(("exchange_rates_poll", "poller", "start"))
-                exchange_res = await self.client.get_rates()
+                try:
+                    timestamp = await PollUsecases(self.cache_session,
+                                                   self.kafka_producer) \
+                        ._poll_exchangerate_api_rate()
+                except Exception as error:
+                    logger.warning(error)
+                if timestamp is not None:
+                    Writer.write(("exchange_rates_poll", "poller", "end"),
+                                 timestamp.strftime("%m_%d_%Y"))
+                else:
+                    Writer.write(("exchange_rates_poll", "poller", "pass"))
 
-                await send(
-                    producer=self.kafka_producer,
-                    topic=settings.EXCHANGE_RATES_TOPIC,
-                    value=exchange_res.to_json(),
-                    key=ExchangerateKey(
-                            provider=settings.EXCHANGE_WORKER_PROVIDER,
-                            time=exchange_res.time_last_update_unix
-                            .strftime("%m_%d_%Y"))
-                    .to_json()
-                )
-                Writer.write(("exchange_rates_poll", "poller", "end"),
-                             exchange_res.time_last_update_unix
-                             .strftime("%m_%d_%Y"))
+            else:
+                logger.warning(AppErrorCode.PROVIDER_NOT_AVAILALBE)
+                raise AppError(AppErrorCode.PROVIDER_NOT_AVAILALBE,
+                               AppErrorMessage.PROVIDER_NOT_AVAILALBE)
 
         except Exception as error:
             logger.warning(error)
 
         # Wait for next interval
-        await asyncio.sleep(interval)
+        await asyncio.sleep(self.poll_interval)
 
     async def health_check(self) -> Tuple[bool, List[AppErrorCode]]:
         producer_healthy, cache_healthy = await asyncio.gather(
