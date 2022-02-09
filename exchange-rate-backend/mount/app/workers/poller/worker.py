@@ -47,7 +47,7 @@ class Worker(WorkerInterface):
                     logger.warning(error)
                 if timestamp is not None:
                     Writer.write(("exchange_rates_poll", "poller", "end"),
-                                 timestamp.strftime("%m_%d_%Y"))
+                                 timestamp)
                 else:
                     Writer.write(("exchange_rates_poll", "poller", "pass"))
 
